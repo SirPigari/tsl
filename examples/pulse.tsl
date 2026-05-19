@@ -1,0 +1,5 @@
+fn main(t) -> color
+  let phase  = time() * 3.0 + t * 6.283
+  let bright = mix(0.35, 1.0, (sin(phase) + 1.0) * 0.5)
+  return gray(bright)
+end

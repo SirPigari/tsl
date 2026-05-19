@@ -1,0 +1,35 @@
+[package]
+name = "tsl"
+version = "1.0.0"
+edition = "2024"
+default-run = "tslc"
+
+[lib]
+name = "tsl"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tslc"
+path = "src/main.rs"
+
+[[bin]]
+name = "tsl_editor"
+path = "src/editor.rs"
+required-features = ["editor"]
+
+[features]
+editor = [
+    "dep:eframe",
+    "dep:egui",
+    "dep:ansi-parser",
+]
+
+[dependencies]
+eframe = { version = "0.34", optional = true }
+egui = { version = "0.34", optional = true }
+ansi-parser = { version = "0.9", optional = true }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

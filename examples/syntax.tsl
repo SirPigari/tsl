@@ -1,0 +1,12 @@
+fn main(t, i, len, x, y, col_i, row_i, c) -> color
+  if c >= '0' && c <= '9' do
+    return rgb(255, 180, 40)
+  end
+  if c >= 'A' && c <= 'Z' do
+    return rgb(80, 220, 220)
+  end
+  if c >= 'a' && c <= 'z' do
+    return rgb(180, 200, 255)
+  end
+  return rgb(110, 110, 120)
+end

@@ -1,0 +1,3 @@
+fn main(t, i, len, x) -> color
+  return hsl(x, 1.0, 0.55)
+end
