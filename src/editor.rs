@@ -4,34 +4,58 @@ use eframe::egui;
 use egui::{Color32, FontId, Id, Key, TextFormat};
 use tsl::{RenderParams, TextMode, compile, render};
 
-const SHADER_PRESETS: [(&str, &str); 6] = [
+const SHADER_PRESETS: [(&str, &str); 12] = [
     (
         "Rainbow (animated)",
-        "fn main(t, i, len, x, y, col_i, row_i) -> color\n  return hsv(fract(x + y * 0.2 + time() * 0.2), 1.0, 1.0)\nend\n",
+        "fn main(t, i, len, x, y, col_i, row_i) -> color\n  let hue = fract(x * 0.8 + y * 0.35 + time() * 0.18)\n  return hsv(hue, 1.0, 1.0)\nend\n",
     ),
     (
-        "Ramp",
-        "fn main(t, i, len, x, y, col_i, row_i) -> color\n  return mixc(rgb(30, 120, 255), rgb(255, 120, 30), x)\nend\n",
+        "Sunset Ramp",
+        "fn main(t, i, len, x, y, col_i, row_i) -> color\n  let sky = mixc(rgb(15, 30, 80), rgb(255, 130, 70), y)\n  return mixc(sky, rgb(255, 210, 120), x * 0.4)\nend\n",
     ),
     (
         "Rectangle",
-        "fn main(t, i, len, x, y, col_i, row_i) -> color\n  let inside = step(0.05, x) * step(0.05, y) * step(x, 0.95) * step(y, 0.95)\n  if inside == 0.0 do\n    return rgb(35, 35, 90)\n  end\n  return rgb(255, 200, 90)\nend\n",
+        "fn main(t, i, len, x, y, col_i, row_i) -> color\n  let inside = step(0.08, x) * step(0.08, y) * step(x, 0.92) * step(y, 0.92)\n  if inside == 0.0 do\n    return rgb(20, 35, 80)\n  end\n  let pulse = 0.5 + 0.5 * sin(time() * 2.0 + x * 8.0)\n  return mixc(rgb(255, 180, 50), rgb(255, 240, 170), pulse)\nend\n",
     ),
     (
         "Trans Flag",
-        "fn stripe(y) -> color\n  let band = floor(clamp(y, 0.0, 0.9999) * 5.0)\n\n  if band == 0.0 do return rgb(91, 206, 250) end\n  if band == 1.0 do return rgb(245, 169, 184) end\n  if band == 2.0 do return rgb(255, 255, 255) end\n  if band == 3.0 do return rgb(245, 169, 184) end\n  return rgb(91, 206, 250)\nend\n\nfn main(t, i, len, x, y) -> color\n  let flag = stripe(y)\n\n  let orig = original()\n  let luma = orig.r * 0.299 + orig.g * 0.587 + orig.b * 0.114\n\n  return mixc(flag, rgb(255, 255, 255), max(luma, 0.4) * 0.35)\nend\n",
+        "fn stripe(y) -> color\n  let band = floor(clamp(y, 0.0, 0.9999) * 5.0)\n  if band == 0.0 do return rgb(91, 206, 250) end\n  if band == 1.0 do return rgb(245, 169, 184) end\n  if band == 2.0 do return rgb(255, 255, 255) end\n  if band == 3.0 do return rgb(245, 169, 184) end\n  return rgb(91, 206, 250)\nend\n\nfn main(t, i, len, x, y) -> color\n  let flag = stripe(y)\n  let grain = rand(i + seed() * 0.01) * 0.08\n  return mixc(flag, rgb(255, 255, 255), grain)\nend\n",
     ),
     (
         "Char Colors",
         "fn main(t, i, len, x, y, col_i, row_i, c) -> color\n  if c == '#' do return rgb(255, 120, 255) end\n  if c == 'A' do return rgb(255, 255, 120) end\n  if c == ' ' do return rgb(80, 80, 80) end\n  if c >= '0' && c <= '9' do return rgb(255, 208, 64) end\n  if c >= 'A' && c <= 'Z' do return rgb(120, 200, 255) end\n  if c >= 'a' && c <= 'z' do return rgb(120, 255, 160) end\n  return rgb(255, 120, 160)\nend\n",
     ),
     (
-        "Char Replace",
-        "fn main(t, i, len, x, y, col_i, row_i, c) -> (color, char)\n  let hue = fract(x + time() * 0.15)\n  let new_c = floor(rand(33.0, 127.0))\n  return (hsl(hue, 1.0, 0.55), new_c)\nend\n",
+        "Char Replace Matrix",
+        "fn main(t, i, len, x, y, col_i, row_i, c) -> (char, color)\n  let seedv = i * 17.0 + floor(time() * 8.0)\n  let r = rand(seedv)\n  let new_c = floor(33.0 + r * 94.0)\n  let glow = 0.3 + 0.7 * rand(seedv + 3.0)\n  return (new_c, rgb(20.0 * glow, 255.0 * glow, 80.0 * glow))\nend\n",
+    ),
+    (
+        "Checker FG/BG",
+        "fn main(t, i, len, x, y, col_i, row_i, c) -> (color, color)\n  let cx = floor(col_i * 0.5)\n  let cy = floor(row_i * 0.5)\n  let checker = (cx + cy) % 2.0\n  if checker == 0.0 do\n    return (rgb(240, 240, 240), rgb(30, 60, 120))\n  end\n  return (rgb(40, 30, 20), rgb(240, 180, 110))\nend\n",
+    ),
+    (
+        "Neon Title",
+        "fn main(t, i, len, x, y, col_i, row_i, c) -> (char, color, color)\n  let pulse = 0.55 + 0.45 * sin(time() * 3.0 + x * 10.0)\n  let fg = mixc(rgb(120, 220, 255), rgb(255, 100, 220), pulse)\n  let bg = rgb(8, 10, 28)\n  if c == ' ' do\n    return (' ', rgb(160, 160, 160), rgb(8, 10, 28))\n  end\n  return (c, fg, bg)\nend\n",
+    ),
+    (
+        "Wave Distort",
+        "fn main(t, i, len, x, y, col_i, row_i, c) -> (char, color)\n  let phase = sin(time() * 2.5 + y * 12.0)\n  let shift = floor((phase + 1.0) * 6.0)\n  let new_c = 33.0 + ((c + shift) % 94.0)\n  let hue = fract(x + time() * 0.1)\n  return (new_c, hsv(hue, 0.9, 1.0))\nend\n",
+    ),
+    (
+        "Loop Bands",
+        "fn main(t, i, len, x, y, col_i, row_i, c) -> color\n  let k = 0.0\n  let acc = 0.0\n  while k < 6.0 do\n    let band = smoothstep(k * 0.16, k * 0.16 + 0.1, y)\n    acc = acc + band * (0.6 / (k + 1.0))\n    k = k + 1.0\n  end\n  let v = clamp(acc + 0.2 * sin(time() + x * 7.0), 0.0, 1.0)\n  return hsv(fract(v + x * 0.25), 0.8, v)\nend\n",
+    ),
+    (
+        "Seeded Static",
+        "fn main(t, i, len, x, y, col_i, row_i, c) -> (char, color)\n  let n = rand(i + seed() * 0.123)\n  if n < 0.82 do\n    return ('.', rgb(90, 100, 120))\n  end\n  if n < 0.95 do\n    return ('*', rgb(170, 200, 255))\n  end\n  return ('#', rgb(255, 255, 255))\nend\n",
+    ),
+    (
+        "Hex Dump",
+        "fn nib(v) -> char\n  if v < 10.0 do return 48.0 + v end\n  return 55.0 + v\nend\n\nfn main(t, i, len, x, y, col_i, row_i, c) -> (char, color)\n  let which = col_i % 3.0\n  if which == 0.0 do\n    return (nib(floor(c / 16.0) % 16.0), rgb(255, 180, 90))\n  end\n  if which == 1.0 do\n    return (nib(c % 16.0), rgb(255, 220, 140))\n  end\n  return (' ', rgb(120, 120, 120))\nend\n",
     ),
 ];
 
-const TEXT_PRESETS: [(&str, &str); 3] = [
+const TEXT_PRESETS: [(&str, &str); 6] = [
     (
         "Rectangle",
         "##################################\n##################################\n##################################\n##################################\n##################################\n##################################\n##################################\n##################################\n##################################\n##################################\n##################################\n##################################\n##################################\n##################################",
@@ -44,12 +68,23 @@ const TEXT_PRESETS: [(&str, &str); 3] = [
         "Blocks",
         "##########..........##########\n##########..........##########\n##########..........##########",
     ),
+    (
+        "Quote",
+        "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG\nPack my box with five dozen liquor jugs.\nSphinx of black quartz, judge my vow.",
+    ),
+    (
+        "Code",
+        "fn shade(x, y) -> color\n  let edge = step(0.1, x) * step(0.1, y)\n  return mixc(rgb(30,40,90), rgb(255,180,80), edge)\nend",
+    ),
+    (
+        "Lorem Ipsum",
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\nUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.\nExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nSed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.\nEaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.\nNemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos.\nQui ratione voluptatem sequi nesciunt, neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur.\n\nAdipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.\nUt enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi.\nConsequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur.\nVel illum qui dolorem eum fugiat quo voluptas nulla pariatur?\n\nAt vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti.\nQuos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt.\nMollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.\nNam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus.",
+    ),
 ];
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1200.0, 1000.0])
             .with_min_inner_size([800.0, 700.0])
             .with_maximized(true),
         ..Default::default()

@@ -4,6 +4,7 @@ pub(crate) mod vm;
 pub use compiler::{CompiledShader, compile, compile_fns, parse};
 pub use vm::{CharSet, Color, RenderParams, TextMode, render, render_bytes};
 
+/// Utility functions (to use outside of shaders, for example passing time() as the time parameter to render())
 pub mod util {
     /// Strip ANSI escape codes from a string, returning the plain text content
     pub fn strip_ansi(s: &str) -> String {
