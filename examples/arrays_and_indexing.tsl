@@ -1,0 +1,17 @@
+fn pick(float[] values, float idx) -> char
+  return values[idx]
+end
+
+fn main(t, i, len, x, y, col_i) -> char
+  let palette = [46, 42, 64, 35]
+  let k = col_i % 4
+  let ch = pick(palette, k)
+
+  // Mutate an array cell and read it back.
+  palette[0] = 69
+  if i == 0 do
+    return palette[0]
+  end
+
+  return ch
+end

@@ -1,0 +1,9 @@
+extern bool enabled = true
+extern float gain = 0.8
+extern color tint = rgb(120, 200, 255)
+
+fn main(t, i, len, x, y) -> color
+  let pulse = (sin(time() * 2.0 + t * 6.283) + 1.0) * 0.5
+  let level = enabled ? mix(0.15, gain, pulse) : 0.08
+  return tint * level
+end

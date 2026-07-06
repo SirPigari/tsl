@@ -2,7 +2,10 @@
 name = "tsl"
 version = "1.0.0"
 edition = "2024"
+description = "A shader language for text-based graphics"
+repository = "https://github.com/SirPigari/tsl"
 default-run = "tslc"
+license = "MIT"
 
 [lib]
 name = "tsl"
@@ -25,8 +28,8 @@ editor = [
 ]
 
 [dependencies]
-eframe = { version = "0.34", optional = true }
-egui = { version = "0.34", optional = true }
+eframe = { version = "0.35", optional = true }
+egui = { version = "0.35", optional = true }
 ansi-parser = { version = "0.9", optional = true }
 
 [profile.release]

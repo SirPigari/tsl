@@ -1,0 +1,23 @@
+fn main(t, i, len, x, y) -> color
+  let n = normalize(vec3(x - 0.5, y - 0.5, 0.35))
+  let l = normalize(vec3(0.35, 0.6, 0.72))
+  let v = normalize(vec3(0.0, 0.0, 1.0))
+
+  let ndotl = max(dot(n, l), 0.0)
+  let r = reflect(-l, n)
+  let spec = pow(max(dot(r, v), 0.0), 16.0)
+
+  let basis = matrix3(
+    1.0, 0.0, 0.0,
+    0.0, 0.0, -1.0,
+    0.0, 1.0, 0.0
+  )
+  let bent = basis * n
+  let c = normalize(cross(n, l))
+
+  let rr = clamp((bent.x + 1.0) * 0.5 + spec * 0.4, 0.0, 1.0)
+  let gg = clamp((bent.y + 1.0) * 0.5 * ndotl, 0.0, 1.0)
+  let bb = clamp((c.z + 1.0) * 0.5, 0.0, 1.0)
+
+  return rgb(rr * 255, gg * 255, bb * 255)
+end

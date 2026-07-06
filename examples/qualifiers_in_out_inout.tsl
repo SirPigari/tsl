@@ -1,0 +1,21 @@
+fn remap(float a, float b, float v) -> char
+  let t = clamp((v - a) / (b - a), 0.0, 1.0)
+  return mix(48, 57, t)
+end
+
+fn tone(inout float v, out float mag, const float k) -> char
+  v = v * k
+  mag = abs(v)
+  return remap(0.0, 1.0, mag)
+end
+
+fn main(t, i, len, x, y) -> char
+  let a = sin(time() + t * 6.283)
+  let m = 0
+  let ch = tone(a, m, 0.75)
+
+  if m > 0.6 do
+    return 64
+  end
+  return ch
+end

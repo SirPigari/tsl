@@ -1,0 +1,13 @@
+extern (char, color) accent = (42, rgb(255, 90, 30))
+
+fn main(t, i, len, x, y, col_i, row_i, c, original) -> (char, color, color)
+  let wave = (sin(time() * 2.0 + x * 8.0 + y * 4.0) + 1.0) * 0.5
+  let fg = mixc(original, accent, wave)
+  let bg = rgb(8, 12, 20)
+
+  if c == 32 do
+    return (42, fg, bg)
+  end
+
+  return (c, fg, bg)
+end
